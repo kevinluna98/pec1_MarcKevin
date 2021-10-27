@@ -20,6 +20,7 @@ python housePriceScraper.py
 
 Actualmente solo extrae información de pisos en Barcelona capital. La información extraida es la siguiente:
 -  Barrio
+-  Contrato
 -  Descripción
 -  Precio
 -  Habitación
