@@ -5,7 +5,7 @@ Autores: Marc Nieto y Kevin Luna
 DOI Zenodo: https://doi.org/10.5281/zenodo.5597774
 
 ## Español
-Este código genera un dataset que proporciona la localización y las características principales (número de habitaciones, baños, metros cuadrados, barrio y precio) de un piso en Barcelona, a fecha 24/10/2021 
+Este código genera un dataset que proporciona la localización y las características principales (número de habitaciones, baños, metros cuadrados, barrio y precio) de un piso en Barcelona.
 
 Extrae los precios y caracteristicas de diferentes pisos de la página web https://www.pisos.com/viviendas/barcelones.
 
