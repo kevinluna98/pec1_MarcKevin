@@ -23,11 +23,47 @@ sublinks=["pisos-sant_pere_santa_caterina_la_ribera","pisos-ciutat_vella_la_barc
                 "pisos-sarria_sant_gervasi_sarria","pisos-vallvidrera_el_tibidabo_les_planes", "pisos-la_sagrada_familia","pisos-la_nova_esquerra_de_eixample",
                 "pisos-antiga_esquerra_de_eixample","pisos-el_fort_pienc","pisos-el_raval","pisos-el_barri_gotic","pisos-la_dreta_de_eixample"]
 
-#sublinks=["pisos-barcelona","pisos-madrid"]
+
 code=0
 contracts=["venta","alquiler"]
 results=pd.DataFrame(columns=["codigo","contrato","link","barrio","titulo","precio","habitaciones","banyos","metros"])
-#%%
+#Funcion para convertir el html en informacion
+def parser(soup):
+    listParents=soup.find_all("div",class_="ad-preview__info")
+    for parent in listParents:
+        #Por cada anuncio sacamos el nombre del piso y el barrio
+        neighborhood=parent.findChildren("p",class_="p-sm")[0].get_text()
+        title=parent.findChildren("a",class_="ad-preview__title")[0].get_text()
+        #Sacamos el precio, el try except es porque a veces no hay precio y al castear el int da error
+        try:
+            price=int(parent.findChildren("span",class_="ad-preview__price")[0].get_text().strip("\n €").replace(".",""))
+        except:
+            price=None
+        #sacamos la info
+        infos=parent.findChildren("p",class_="ad-preview__char p-sm")
+        #Iniciamos valores a null porque si no existe uno lo queremos vacio en la bd
+        room=None
+        bath=None
+        meters=None
+        #En función de los posibles sufijos de la info la clasifica, esta en un try except porque a veces
+        #info es una sola palabra y al hacer split() no devuelve los dos valores que espera
+        for info in infos:
+            try:
+                data,sufix =info.get_text().split()
+                if (sufix=="baño"):
+                    bath=int(data)
+                elif (sufix=="baños"):
+                    bath=int(data)
+                elif(sufix=="m²"):
+                    meters=int(data)
+                elif(sufix=="habs."):
+                    room=int(data)
+                elif(sufix=="hab."):
+                    room=int(data)
+            except:
+                next
+    return contract,link,neighborhood,title,price,room,bath,meters
+
 for contract in contracts:
     for sublink in sublinks:
         run=True
@@ -51,41 +87,9 @@ for contract in contracts:
                 pass
             print(f"Extrayendo información de la página {link}")
             #buscamos todos los anuncios de la pag
-            listParents=soup.find_all("div",class_="ad-preview__info")
-            for parent in listParents:
-                #Por cada anuncio sacamos el nombre del piso y el barrio
-                neighborhood=parent.findChildren("p",class_="p-sm")[0].get_text()
-                title=parent.findChildren("a",class_="ad-preview__title")[0].get_text()
-                #Sacamos el precio, el try except es porque a veces no hay precio y al castear el int da error
-                try:
-                    price=int(parent.findChildren("span",class_="ad-preview__price")[0].get_text().strip("\n €").replace(".",""))
-                except:
-                    price=None
-                #sacamos la info
-                infos=parent.findChildren("p",class_="ad-preview__char p-sm")
-                #Iniciamos valores a null porque si no existe uno lo queremos vacio en la bd
-                room=None
-                bath=None
-                meters=None
-                #En finción de los posibles sufijos de la info la clasifica, esta en un try except porque a veces
-                #info es una sola palabra y al hacer split() no devuelve los dos valores que espera y peta
-                for info in infos:
-                    try:
-                        data,sufix =info.get_text().split()
-                        if (sufix=="baño"):
-                            bath=int(data)
-                        elif (sufix=="baños"):
-                            bath=int(data)
-                        elif(sufix=="m²"):
-                            meters=int(data)
-                        elif(sufix=="habs."):
-                            room=int(data)
-                        elif(sufix=="hab."):
-                            room=int(data)
-                    except:
-                        next
-                results.loc[len(results)]=[code,contract,link,neighborhood,title,price,room,bath,meters]
-                #Asignamos un codigo único a cada casa porque el nombre del anuncio a veces se repite, no es unívoco
-                code=code+1
+            contract,link,neighborhood,title,price,room,bath,meters=parser(soup)
+            results.loc[len(results)]=[code,contract,link,neighborhood,title,price,room,bath,meters]
+            #Asignamos un codigo unico a cada casa porque el nombre del anuncio a veces se repite, no es univoco
+            code=code+1
         #hacermos un guardado por cada barrio por si acaso hay algun problema tener algunos datos
     results.to_csv(f"barcelona_house_pricing{datetime.date.today().strftime('%d_%m_%y')}.csv", index=False)
